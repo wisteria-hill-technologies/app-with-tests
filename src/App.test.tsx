@@ -2,16 +2,18 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import App from './App';
 
-const setup = (props={}, state=null) => {
-  return shallow<App>(<App { ...props} />);
+const setup = (props: any = null, state: any = null) => {
+  const wrapper = shallow<App>(<App { ...props} />);
+  if(state) wrapper.setState(state);
+  return wrapper;
 };
 
 interface Wrapper {
   find: (value: string) => any
 }
 
-const findByDataTestAttr = (wrapper: Wrapper, val: string) => {
-  return wrapper.find(`[data-test='${val}']`);
+const findByDataTestAttr = (wrapper: Wrapper, name: string) => {
+  return wrapper.find(`[data-test='${name}']`);
 };
 
 test('renders without error', () => {
@@ -33,11 +35,55 @@ test('renders counter display', () => {
 });
 
 test('counter starts at 0', () => {
-
+  const wrapper = setup();
+  const initialCounterState: number = wrapper.state('counter');
+  expect(initialCounterState).toBe(0);
 });
 
 test('clicking button increments counter display', () => {
+  const counter = 7;
+  const wrapper = setup(null, { counter });
 
+  // find increment button and click
+  const button = findByDataTestAttr(wrapper, 'increment-button');
+  button.simulate('click');
+
+  // find display and check value
+  const counterDisplay = findByDataTestAttr(wrapper, "counter-display");
+  expect(counterDisplay.text()).toContain('8');
+});
+
+test('clicking button decrements counter display', () => {
+  const counter = 7;
+  const wrapper = setup(null, { counter });
+
+  // find decrement button and click
+  const button = findByDataTestAttr(wrapper, 'decrement-button');
+  button.simulate('click');
+
+  // find display and check value
+  const counterDisplay = findByDataTestAttr(wrapper, "counter-display");
+  expect(counterDisplay.text()).toContain('6');
+});
+
+test("counter can't go below zero", () => {
+  const counter = 0;
+  const wrapper = setup(null, { counter });
+
+  // find decrement button and click
+  const decrementBtn = findByDataTestAttr(wrapper, 'decrement-button');
+  decrementBtn.simulate('click');
+
+  const counterDisplay = findByDataTestAttr(wrapper, 'counter-display');
+  expect(counterDisplay.text()).toContain('0');
+
+  const message = findByDataTestAttr(wrapper, 'message');
+  expect(message.length).toBe(1);
+
+  const incrementBtn = findByDataTestAttr(wrapper, 'increment-button');
+  incrementBtn.simulate('click');
+  const newMessage = findByDataTestAttr(wrapper, 'message');
+  expect(newMessage.length).toBe(0);
 });
 
 
